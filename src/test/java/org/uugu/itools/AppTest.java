@@ -1,4 +1,4 @@
-package org.uugu.common;
+package org.uugu.itools;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

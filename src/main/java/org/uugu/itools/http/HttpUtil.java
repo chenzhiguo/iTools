@@ -1,8 +1,7 @@
-package org.uugu.common.http;
+package org.uugu.itools.http;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -31,13 +30,13 @@ import org.codehaus.jackson.type.JavaType;
 public class HttpUtil {
 
 	public static void main(String[] args) throws Exception {
-		Map<String, String> params = new HashMap<>();
-		params.put("log","admin");
-		params.put("pwd","zhimakaimena");
-		//Test test = doGet("http://noteme.cn/wp-login.php", params, Test.class);
-		Test test2 = doPost("http://noteme.cn/wp-login.php", params, Test.class);
-		//System.out.println(test.getUserName());
-		System.out.println(test2.getPassword());
+//		Map<String, String> params = new HashMap<String, String>();
+//		params.put("log","admin");
+//		params.put("pwd","zhimakaimena");
+//		//Test test = doGet("http://noteme.cn/wp-login.php", params, Test.class);
+//		Test test2 = doPost("http://noteme.cn/wp-login.php", params, Test.class);
+//		//System.out.println(test.getUserName());
+//		System.out.println(test2.getPassword());
 	}
 
 	/**
