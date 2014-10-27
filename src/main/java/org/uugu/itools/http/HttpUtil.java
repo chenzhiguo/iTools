@@ -66,7 +66,9 @@ public class HttpUtil {
                 builder = builder.addParameter(key, this.params.get(key));
             }
         }
-        return request(builder.build());
+
+        HttpResponse response = httpClient.execute(builder.build());
+        return EntityUtils.toString(response.getEntity());
     }
 
     /**
@@ -91,7 +93,9 @@ public class HttpUtil {
                 builder = builder.addParameter(key, params.get(key));
             }
         }
-        return request(builder.build());
+
+        HttpResponse response = httpClient.execute(builder.build());
+        return EntityUtils.toString(response.getEntity());
     }
 
     public String post() throws IOException {
@@ -113,7 +117,8 @@ public class HttpUtil {
         HttpEntity httpEntity = new UrlEncodedFormEntity(appParams, "UTF-8");
         httpRequest.setEntity(httpEntity);
 
-        return request(httpRequest);
+        HttpResponse response = httpClient.execute(httpRequest);
+        return EntityUtils.toString(response.getEntity());
     }
 
     /**
@@ -143,16 +148,13 @@ public class HttpUtil {
         HttpEntity httpEntity = new UrlEncodedFormEntity(appParams, "UTF-8");
         httpRequest.setEntity(httpEntity);
 
-        return request(httpRequest);
-    }
-
-    private String request(HttpUriRequest request) throws IOException {
-        HttpResponse response = httpClient.execute(request);
+        HttpResponse response = httpClient.execute(httpRequest);
         return EntityUtils.toString(response.getEntity());
     }
 
+
 	/**
-	 * Get访问方式
+	 * Get访问方式(解析JSON为对象)
 	 * @param url 访问地址
 	 * @param params 请求参数
 	 * @param clazz 返回数据背解析成为的对象类型
@@ -210,7 +212,7 @@ public class HttpUtil {
 	}
 
 	/**
-	 * Post访问方式
+	 * Post访问方式(解析JSON为对象)
 	 * @param url 访问地址
 	 * @param params 请求参数
 	 * @param clazz 返回数据背解析成为的对象类型
@@ -223,7 +225,7 @@ public class HttpUtil {
 		closeableHttpClient = HttpClients.createDefault();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String responseBody = "";
-		HttpPost httpPost = new HttpPost();
+		HttpPost httpPost = new HttpPost(url);
 		httpPost.addHeader("Content-Type", "text/html;charset=UTF-8");
 		List<NameValuePair> nvps = new ArrayList<NameValuePair>();
 		if (params != null) {
@@ -232,7 +234,7 @@ public class HttpUtil {
 						.getValue()));
 			}
 		}
-		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
+		httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
 		closeableHttpResponse = closeableHttpClient.execute(httpPost);
 
 		try {
@@ -272,7 +274,7 @@ public class HttpUtil {
      * 关闭连接与响应对象
      * @throws IOException
      */
-    public static void close() throws IOException {
+    private static void close() throws IOException {
         if(closeableHttpResponse != null){
             closeableHttpResponse.close();
         }
