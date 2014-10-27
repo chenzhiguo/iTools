@@ -1,5 +1,6 @@
 package org.uugu.itools.http;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -7,8 +8,10 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -29,15 +32,124 @@ import org.codehaus.jackson.type.JavaType;
  */
 public class HttpUtil {
 
-	public static void main(String[] args) throws Exception {
-//		Map<String, String> params = new HashMap<String, String>();
-//		params.put("log","admin");
-//		params.put("pwd","zhimakaimena");
-//		//Test test = doGet("http://noteme.cn/wp-login.php", params, Test.class);
-//		Test test2 = doPost("http://noteme.cn/wp-login.php", params, Test.class);
-//		//System.out.println(test.getUserName());
-//		System.out.println(test2.getPassword());
-	}
+    private HttpClient httpClient;
+    private String url;
+    private Map<String, String> params;
+    private Map<String, String> headerParams;
+
+    private static CloseableHttpClient closeableHttpClient;
+    private static CloseableHttpResponse closeableHttpResponse;
+
+
+    public HttpUtil() {
+        httpClient = HttpClients.createDefault();
+    }
+
+    public HttpUtil(String url, Map<String, String> params, Map<String, String> headerParam) {
+        httpClient = HttpClients.createDefault();
+        this.url = url;
+        this.params = params;
+        this.headerParams = headerParam;
+    }
+
+    public String get() throws IOException {
+        RequestBuilder builder = RequestBuilder.get().setUri(this.url);
+
+        if(this.headerParams != null){
+            for (String key : this.headerParams.keySet()) {
+                builder.setHeader(key, this.headerParams.get(key));
+            }
+        }
+
+        if (this.params != null) {
+            for (String key : this.params.keySet()) {
+                builder = builder.addParameter(key, this.params.get(key));
+            }
+        }
+        return request(builder.build());
+    }
+
+    /**
+     *
+     * @param uri   请求地址
+     * @param params    参数的Map
+     * @param headerParams  header参数Map。key为需要设置的header名，value为header值
+     * @return
+     * @throws IOException
+     */
+    public String get(String uri, Map<String, String> params, Map<String, String> headerParams) throws IOException {
+        RequestBuilder builder = RequestBuilder.get().setUri(uri);
+
+        if(headerParams != null){
+            for (String key : headerParams.keySet()) {
+                builder.setHeader(key, headerParams.get(key));
+            }
+        }
+
+        if (params != null) {
+            for (String key : params.keySet()) {
+                builder = builder.addParameter(key, params.get(key));
+            }
+        }
+        return request(builder.build());
+    }
+
+    public String post() throws IOException {
+        HttpPost httpRequest = new HttpPost(this.url);
+        List<NameValuePair> appParams = new ArrayList<NameValuePair>();
+
+        if(this.headerParams != null){
+            for (String key : this.headerParams.keySet()) {
+                httpRequest.setHeader(key, this.headerParams.get(key));
+            }
+        }
+
+        if (this.params != null) {
+            for (String key : this.params.keySet()) {
+                appParams.add(new BasicNameValuePair(key, this.params.get(key)));
+            }
+        }
+
+        HttpEntity httpEntity = new UrlEncodedFormEntity(appParams, "UTF-8");
+        httpRequest.setEntity(httpEntity);
+
+        return request(httpRequest);
+    }
+
+    /**
+     *
+     * @param uri   请求地址
+     * @param params    参数的Map
+     * @param headerParams  header参数Map。key为需要设置的header名，value为header值
+     * @return
+     * @throws IOException
+     */
+    public String post(String uri, Map<String, String> params, Map<String, String> headerParams) throws IOException {
+        HttpPost httpRequest = new HttpPost(uri);
+        List<NameValuePair> appParams = new ArrayList<NameValuePair>();
+
+        if(headerParams != null){
+            for (String key : headerParams.keySet()) {
+                httpRequest.setHeader(key, headerParams.get(key));
+            }
+        }
+
+        if (params != null) {
+            for (String key : params.keySet()) {
+                appParams.add(new BasicNameValuePair(key, params.get(key)));
+            }
+        }
+
+        HttpEntity httpEntity = new UrlEncodedFormEntity(appParams, "UTF-8");
+        httpRequest.setEntity(httpEntity);
+
+        return request(httpRequest);
+    }
+
+    private String request(HttpUriRequest request) throws IOException {
+        HttpResponse response = httpClient.execute(request);
+        return EntityUtils.toString(response.getEntity());
+    }
 
 	/**
 	 * Get访问方式
@@ -50,26 +162,24 @@ public class HttpUtil {
 	 */
 	public static <T> T doGet(String url, Map<String, String> params,
 			Class<T> clazz, Class<?>... argClasses) throws Exception {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
+        closeableHttpClient = HttpClients.createDefault();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String responseBody = "";
-		try {
-			RequestBuilder requestBuilder = RequestBuilder.get().setUri(
-					new URI(url));
-			if (params != null) {
-				for (Entry<String, String> entry : params.entrySet()) {
-					requestBuilder.addParameter(entry.getKey(),
-							entry.getValue());
-				}
-			}
-			HttpUriRequest httpGet = requestBuilder.build();
-			httpGet.addHeader("Content-Type", "text/html;charset=UTF-8");
-			CloseableHttpResponse response = httpclient.execute(httpGet);
 
-			try {
-				HttpEntity entity = response.getEntity();
+        RequestBuilder requestBuilder = RequestBuilder.get().setUri(new URI(url));
+        if (params != null) {
+            for (Entry<String, String> entry : params.entrySet()) {
+                requestBuilder.addParameter(entry.getKey(),
+                        entry.getValue());
+            }
+        }
+        HttpUriRequest httpUriRequest = requestBuilder.build();
+        httpUriRequest.addHeader("Content-Type", "text/html;charset=UTF-8");
+        closeableHttpResponse = closeableHttpClient.execute(httpUriRequest);
+		try {
+				HttpEntity entity = closeableHttpResponse.getEntity();
 				// 判断执行结果返回状态
-				int status = response.getStatusLine().getStatusCode();
+				int status = closeableHttpResponse.getStatusLine().getStatusCode();
 				if (status >= 200 && status < 300) {
 					responseBody = entity != null ? EntityUtils
 							.toString(entity) : null;
@@ -81,15 +191,12 @@ public class HttpUtil {
 				ContentType contentType = ContentType.getOrDefault(entity);
 				if (!contentType.getMimeType().equals(
 						ContentType.APPLICATION_JSON.getMimeType())) {
-					throw new ClientProtocolException(
-							"Unexpected content type: " + contentType);
+					throw new ClientProtocolException("Unexpected content type: " + contentType);
 				}
 				EntityUtils.consume(entity);
-			} finally {
-				response.close();
-			}
+
 		} finally {
-			httpclient.close();
+            close();
 		}
 
 		if (argClasses.length > 0) {
@@ -113,7 +220,7 @@ public class HttpUtil {
 	 */
 	public static <T> T doPost(String url, Map<String, String> params,
 			Class<T> clazz, Class<?>... argClasses) throws Exception {
-		CloseableHttpClient httpclient = HttpClients.createDefault();
+		closeableHttpClient = HttpClients.createDefault();
 		ObjectMapper objectMapper = new ObjectMapper();
 		String responseBody = "";
 		HttpPost httpPost = new HttpPost();
@@ -126,12 +233,12 @@ public class HttpUtil {
 			}
 		}
 		httpPost.setEntity(new UrlEncodedFormEntity(nvps));
-		CloseableHttpResponse response = httpclient.execute(httpPost);
+		closeableHttpResponse = closeableHttpClient.execute(httpPost);
 
 		try {
-			HttpEntity entity = response.getEntity();
+			HttpEntity entity = closeableHttpResponse.getEntity();
 			// 判断执行结果返回状态
-			int status = response.getStatusLine().getStatusCode();
+			int status = closeableHttpResponse.getStatusLine().getStatusCode();
 			if (status >= 200 && status < 300) {
 				responseBody = entity != null ? EntityUtils.toString(entity)
 						: null;
@@ -148,8 +255,7 @@ public class HttpUtil {
 			}
 			EntityUtils.consume(entity);
 		} finally {
-			response.close();
-			httpclient.close();
+            close();
 		}
 
 		if (argClasses.length > 0) {
@@ -161,4 +267,17 @@ public class HttpUtil {
 		}
 
 	}
+
+    /**
+     * 关闭连接与响应对象
+     * @throws IOException
+     */
+    public static void close() throws IOException {
+        if(closeableHttpResponse != null){
+            closeableHttpResponse.close();
+        }
+        if(closeableHttpClient != null){
+            closeableHttpClient.close();
+        }
+    }
 }
