@@ -22,6 +22,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.type.JavaType;
 
@@ -202,6 +203,8 @@ public class HttpUtil {
 		}
 
 		if (argClasses.length > 0) {
+            // 解决反序列化为集合失败问题
+            objectMapper.configure(DeserializationConfig.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 			JavaType javaType = objectMapper.getTypeFactory()
 					.constructParametricType(clazz, argClasses);
 			return objectMapper.readValue(responseBody, javaType);
@@ -261,6 +264,8 @@ public class HttpUtil {
 		}
 
 		if (argClasses.length > 0) {
+            // 解决反序列化为集合失败问题
+            objectMapper.configure(DeserializationConfig.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 			JavaType javaType = objectMapper.getTypeFactory()
 					.constructParametricType(clazz, argClasses);
 			return objectMapper.readValue(responseBody, javaType);
