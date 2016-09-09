@@ -38,7 +38,7 @@ public class HttpUtil {
     private Map<String, String> params;
     private Map<String, String> headerParams;
 
-    private static CloseableHttpClient closeableHttpClient;
+    private static CloseableHttpClient closeableHttpClient = HttpClients.createDefault();
     private static CloseableHttpResponse closeableHttpResponse;
 
 
@@ -274,6 +274,43 @@ public class HttpUtil {
 		}
 
 	}
+
+    /**
+     * Post访问方式
+     * @param url 访问地址
+     * @param params 请求参数
+     * @return
+     * @throws Exception
+     */
+    public static boolean doPost(String url, Map<String, String> params) throws Exception {
+//        closeableHttpClient = HttpClients.createDefault();
+        HttpPost httpPost = new HttpPost(url);
+//        httpPost.addHeader("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
+//        httpPost.addHeader("Origin", "http://ukoi.net");
+        List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+        if (params != null) {
+            for (Entry<String, String> entry : params.entrySet()) {
+                nvps.add(new BasicNameValuePair(entry.getKey(), entry.getValue()));
+            }
+        }
+        httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
+        closeableHttpResponse = closeableHttpClient.execute(httpPost);
+
+        try {
+            HttpEntity entity = closeableHttpResponse.getEntity();
+            // 判断执行结果返回状态
+            int status = closeableHttpResponse.getStatusLine().getStatusCode();
+            if (status >= 200 && status < 300) {
+                String responseBody = entity != null ? EntityUtils.toString(entity) : null;
+                System.out.println(responseBody);
+                return true;
+            } else {
+                return false;
+            }
+        } finally {
+//            close();
+        }
+    }
 
     /**
      * 关闭连接与响应对象
